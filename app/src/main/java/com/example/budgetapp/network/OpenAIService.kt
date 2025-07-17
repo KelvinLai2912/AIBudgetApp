@@ -41,13 +41,29 @@ object OpenAIService {
 
     private fun buildRequestBody(prompt: String): String {
         val jsonBody = buildJsonObject {
-            put("model", "gpt-3.5-turbo")
+            put("model", "gpt-4o")
             putJsonArray("messages") {
+                addJsonObject {
+                    put("role", "system")
+                    put("content", """
+                        Je bent een slimme assistent die Nederlandse financiële prompts omzet in transacties.
+                        Je output is een JSON-array van transacties.
+                        Elke transactie heeft: type ("inkomen" of "uitgaven"), amount (float, in euro’s), description (korte tekst).
+                        Geef alleen een geldige JSON-array terug met objecten in dit formaat:
+                        {
+                          "type": "income | expense",
+                          "amount": <getal>,
+                          "category": "<beschrijving>",
+                          "date": "<YYYY-MM-DD>"
+                        }
+                    """.trimIndent())
+                }
                 addJsonObject {
                     put("role", "user")
                     put("content", prompt)
                 }
             }
+
         }
         return json.encodeToString(JsonObject.serializer(), jsonBody)
     }

@@ -15,8 +15,17 @@ data class TransactionResponse(
 
 fun parseToTransaction(jsonString: String): Transaction? {
     return try {
+        val cleanedJson = jsonString
+            .removePrefix("```json")
+            .removePrefix("```")
+            .removeSuffix("```")
+            .trim()
+
         val json = Json { ignoreUnknownKeys = true }
-        val parsed = json.decodeFromString<TransactionResponse>(jsonString)
+
+        val parsedList = json.decodeFromString<List<TransactionResponse>>(cleanedJson)
+        val parsed = parsedList.firstOrNull() ?: return null
+
         Transaction(parsed.type, parsed.amount, parsed.category, parsed.date)
     } catch (e: Exception) {
         e.printStackTrace()
