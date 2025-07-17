@@ -49,23 +49,28 @@ object OpenAIService {
 
     private fun buildRequestBody(prompt: String): String {
         val systemPrompt = """
-            Zet Nederlandse tekst om in een JSON-array met transacties.  
-            Gebruik **alleen** wat letterlijk genoemd is.  
-            Voeg **nooit** extra transacties, bedragen of categorieën toe.
-
-            Elk object bevat:
-            - "type": "income" of "expense"
-            - "amount": exact getal uit de prompt (float, zonder €)
-            - "category": exact woord of zin uit de prompt
-            - "date": YYYY-MM-DD.  
-              Vervang:
-              • "gisteren" → ${LocalDate.now().minusDays(1)}  
-              • "vandaag" → ${LocalDate.now()}  
-              • "morgen" → ${LocalDate.now().plusDays(1)}  
-              • "overmorgen" → ${LocalDate.now().plusDays(2)}
-
-            Geef **alleen** de JSON-array terug, zonder uitleg of markdown.
-        """.trimIndent()
+                                Zet Nederlandse tekst om in een JSON-array met transacties.  
+                                Gebruik **alleen** wat letterlijk genoemd is. Voeg **nooit** extra transacties of bedragen toe.
+                        
+                                Herken en parseer expliciete datums, zowel:
+                                - “YYYY MMMM D” (bijv. “2024 juli 1” → “2024-07-01”)
+                                - “D MMMM YYYY” (bijv. “1 juli 2024” → “2024-07-01”)
+                                én relatieve datums:
+                                  - gisteren → ${LocalDate.now().minusDays(1)}
+                                  - vandaag   → ${LocalDate.now()}
+                                  - morgen    → ${LocalDate.now().plusDays(1)}
+                                  - overmorgen→ ${LocalDate.now().plusDays(2)}
+                        
+                                Formaat per object:
+                                {
+                                  "type":     "income" of "expense",
+                                  "amount":   exact bedrag uit prompt (float),
+                                  "category": letterlijk woord of zin uit prompt,
+                                  "date":     YYYY-MM-DD
+                                }
+                        
+                                Geef **alleen** de JSON-array terug, zonder extra uitleg of markdown.
+                            """.trimIndent()
 
         val body = buildJsonObject {
             put("model", "gpt-4o")
