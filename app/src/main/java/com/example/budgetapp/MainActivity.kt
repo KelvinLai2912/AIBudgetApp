@@ -15,6 +15,11 @@ import com.example.budgetapp.storage.LocalStorage
 import com.example.budgetapp.ui.DashboardScreen
 import com.example.budgetapp.ui.PromptScreen
 import com.example.budgetapp.ui.theme.BudgetAppTheme
+import com.example.budgetapp.network.OpenAIService
+import com.example.budgetapp.util.parseToTransaction
+import kotlinx.coroutines.launch
+
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -27,7 +32,7 @@ class MainActivity : ComponentActivity() {
                 var transactions by remember {
                     mutableStateOf(LocalStorage.loadTransactions(appContext))
                 }
-
+                val coroutineScope = rememberCoroutineScope()
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
@@ -51,18 +56,32 @@ class MainActivity : ComponentActivity() {
                         1 -> PromptScreen(
                             transactions = transactions,
                             onPromptSubmit = { prompt ->
-                                // Later: GPT verwerken
-                                val newTransaction = Transaction(
-                                    type = "expense",
-                                    amount = 10.0,
-                                    category = "test",
-                                    date = "2025-07-17"
-                                )
-                                transactions = transactions + newTransaction
-                                LocalStorage.saveTransactions(appContext, transactions)
-                            },
+                                coroutineScope.launch {
+                                    try {
+                                        val result = OpenAIService.fetchResponse(
+                                            "Zet dit om in JSON met de velden: type (\"income\" of \"expense\"), amount (getal), category, en date (YYYY-MM-DD). Geef *alleen* het JSON-object terug. Prompt: $prompt"
+                                        )
+                                        println("GPT antwoord: $result")
+
+                                        val parsedTransaction = result?.let { parseToTransaction(it) }
+
+                                        if (parsedTransaction != null) {
+                                            transactions = transactions + parsedTransaction
+                                            LocalStorage.saveTransactions(appContext, transactions)
+                                            println("✅ Transactie toegevoegd: $parsedTransaction")
+                                        } else {
+                                            println("⚠️ Kan resultaat niet omzetten naar transactie.")
+                                        }
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                        println("🔥 Fout tijdens GPT-verwerking: ${e.message}")
+                                    }
+                                }
+                            }
+,
                             modifier = Modifier.padding(innerPadding)
                         )
+
                     }
                 }
             }

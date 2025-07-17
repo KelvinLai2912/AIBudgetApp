@@ -4,10 +4,15 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
+val OPENAI_API_KEY: String? by project
 
 android {
     namespace = "com.example.budgetapp"
     compileSdk = 36
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 
     defaultConfig {
         applicationId = "com.example.budgetapp"
@@ -21,8 +26,9 @@ android {
         buildConfigField(
             "String",
             "OPENAI_API_KEY",
-            "\"${project.properties["OPENAI_API_KEY"] ?: ""}\""
+            "\"${OPENAI_API_KEY ?: ""}\""
         )
+
     }
 
     buildTypes {
@@ -40,9 +46,6 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
-    }
-    buildFeatures {
-        compose = true
     }
 }
 
