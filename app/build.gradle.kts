@@ -1,10 +1,20 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.23"
 }
-val OPENAI_API_KEY: String? by project
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        load(FileInputStream(file))
+    }
+}
+val openaiKey: String = localProperties.getProperty("openaiKey") ?: ""
 
 android {
     namespace = "com.example.budgetapp"
@@ -26,8 +36,9 @@ android {
         buildConfigField(
             "String",
             "OPENAI_API_KEY",
-            "\"${OPENAI_API_KEY ?: ""}\""
+            "\"$openaiKey\""
         )
+
 
     }
 
