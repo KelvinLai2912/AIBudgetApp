@@ -10,7 +10,11 @@ import androidx.compose.ui.unit.dp
 import com.example.budgetapp.model.Transaction
 
 @Composable
-fun DashboardScreen(transactions: List<Transaction>) {
+
+fun DashboardScreen(transactions: List<Transaction>,onClearAll: () -> Unit, ) {
+    Button(onClick = onClearAll) {
+        Text("Wis alles")
+    }
     val totalIncome = transactions
         .filter { it.type == "income" }
         .sumOf { it.amount }

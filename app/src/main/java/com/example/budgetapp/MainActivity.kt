@@ -16,10 +16,8 @@ import com.example.budgetapp.ui.DashboardScreen
 import com.example.budgetapp.ui.PromptScreen
 import com.example.budgetapp.ui.theme.BudgetAppTheme
 import com.example.budgetapp.network.OpenAIService
-import com.example.budgetapp.util.parseToTransaction
+import com.example.budgetapp.util.parseToTransactions
 import kotlinx.coroutines.launch
-
-
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,6 +31,7 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(LocalStorage.loadTransactions(appContext))
                 }
                 val coroutineScope = rememberCoroutineScope()
+
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
@@ -52,7 +51,14 @@ class MainActivity : ComponentActivity() {
                     }
                 ) { innerPadding ->
                     when (selectedIndex) {
-                        0 -> DashboardScreen(transactions = transactions)
+                        0 -> DashboardScreen(
+                            transactions = transactions,
+                            onClearAll = {
+                                transactions = emptyList()
+                                LocalStorage.saveTransactions(appContext, transactions)
+                                println("🗑️ Alle transacties gewist.")
+                            }
+                        )
                         1 -> PromptScreen(
                             transactions = transactions,
                             onPromptSubmit = { prompt ->
@@ -63,25 +69,25 @@ class MainActivity : ComponentActivity() {
                                         )
                                         println("GPT antwoord: $result")
 
-                                        val parsedTransaction = result?.let { parseToTransaction(it) }
+                                        val newTransactions = result?.let { parseToTransactions(it) } ?: emptyList()
 
-                                        if (parsedTransaction != null) {
-                                            transactions = transactions + parsedTransaction
+                                        if (newTransactions.isNotEmpty()) {
+                                            transactions = transactions + newTransactions
                                             LocalStorage.saveTransactions(appContext, transactions)
-                                            println("✅ Transactie toegevoegd: $parsedTransaction")
+                                            newTransactions.forEach {
+                                                println("✅ Transactie toegevoegd: $it")
+                                            }
                                         } else {
-                                            println("⚠️ Kan resultaat niet omzetten naar transactie.")
+                                            println("⚠️ Kan resultaat niet omzetten naar transacties.")
                                         }
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                         println("🔥 Fout tijdens GPT-verwerking: ${e.message}")
                                     }
                                 }
-                            }
-,
+                            },
                             modifier = Modifier.padding(innerPadding)
                         )
-
                     }
                 }
             }
