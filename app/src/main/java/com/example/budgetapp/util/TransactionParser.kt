@@ -2,8 +2,8 @@ package com.example.budgetapp.util
 
 import com.example.budgetapp.model.Transaction
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 @Serializable
 data class TransactionResponse(
@@ -13,7 +13,7 @@ data class TransactionResponse(
     val date: String
 )
 
-fun parseToTransaction(jsonString: String): Transaction? {
+fun parseToTransactions(jsonString: String): List<Transaction> {
     return try {
         val cleanedJson = jsonString
             .removePrefix("```json")
@@ -24,11 +24,12 @@ fun parseToTransaction(jsonString: String): Transaction? {
         val json = Json { ignoreUnknownKeys = true }
 
         val parsedList = json.decodeFromString<List<TransactionResponse>>(cleanedJson)
-        val parsed = parsedList.firstOrNull() ?: return null
 
-        Transaction(parsed.type, parsed.amount, parsed.category, parsed.date)
+        parsedList.map {
+            Transaction(it.type, it.amount, it.category, it.date)
+        }
     } catch (e: Exception) {
         e.printStackTrace()
-        null
+        emptyList()
     }
 }
